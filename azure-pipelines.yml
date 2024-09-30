@@ -20,7 +20,7 @@ variables:
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
 
-  agentPool: 'Default'
+  agentPool: 'Azure Pipelines'
 
 stages:
 - stage: Build
