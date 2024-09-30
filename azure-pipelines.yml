@@ -1,80 +1,67 @@
-# Node.js Express Web App to Linux on Azure
-# Build a Node.js Express app and deploy it to Azure as a Linux web app.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
 - main
 
 variables:
-
-  # Azure Resource Manager connection created during pipeline creation
   azureSubscription: '9a77c6b7-b89c-420d-9a92-2dc437472400'
-
-  # Web app name
   webAppName: 'MyWebApp'
-
-  # Environment name
   environmentName: 'Dev'
-
-  # Agent VM image name
-  vmImageName: 'ubuntu-latest'
-
-  agentPool: 'Azure Pipelines'
+  vmImageName: 'ubuntu-latest'  # Using 'ubuntu-latest' VM for Azure-hosted agent
 
 stages:
 - stage: Build
-  displayName: Build stage
+  displayName: 'Build Stage'
   jobs:
   - job: Build
-    displayName: Build
+    displayName: 'Build Job'
     pool:
-      name: $(agentPool) 
+      vmImage: $(vmImageName)  
 
     steps:
     - task: NodeTool@0
       inputs:
         versionSpec: '20.x'
-      displayName: 'Install Node.js'
+      displayName: 'Install Node.js 20.x'
 
     - script: |
-        npm install
-        node app.js
-        npm test 
-      displayName: 'npm install, build and test'
+        npm install  # Install dependencies
+        npm test     # Run tests (Make sure tests are configured in package.json)
+      displayName: 'Install Dependencies and Run Tests'
 
     - task: ArchiveFiles@2
-      displayName: 'Archive files'
+      displayName: 'Archive Build Artifacts'
       inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'  # Archive all working directory files
         includeRootFolder: false
         archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
         replaceExistingArchive: true
 
-    - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-      artifact: drop
+    - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+      artifact: 'drop'  # Publish artifact to be available for the Deploy stage
 
 - stage: Deploy
-  displayName: Deploy stage
+  displayName: 'Deploy Stage'
   dependsOn: Build
-  condition: succeeded()
+  condition: succeeded()  # Ensure deployment runs only if the build succeeded
   jobs:
   - deployment: Deploy
-    displayName: Deploy
+    displayName: 'Deploy to Azure Web App'
     environment: $(environmentName)
     pool:
-      name: $(agentPool)
+      vmImage: $(vmImageName)  # Use hosted Ubuntu agent for the deployment job
     strategy:
       runOnce:
         deploy:
           steps:
+          - download: current  # Download the artifact from the build stage
+            artifact: drop
+            
           - task: AzureWebApp@1
-            displayName: 'Azure Web App Deploy: '
+            displayName: 'Deploy to Azure Web App (Linux)'
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
               appName: $(webAppName)
-              runtimeStack: 'NODE|20LTS'
-              package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
-              startUpCommand: 'npm run start'
+              runtimeStack: 'NODE|20LTS'  # Node.js 20 LTS runtime
+              package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
+              startUpCommand: 'npm start'  # Ensure app starts with npm start
