@@ -1,18 +1,18 @@
 const chai = require("chai");
 const chaiHttp = require("chai-http");
-const app = require("../app"); // Importa la aplicación para realizar solicitudes
-const expect = chai.expect;
+const app = require("../app"); 
 
+chai.should();
 chai.use(chaiHttp);
 
-describe("GET /", () => {
-  it("should return Hello, Azure Pipelines with Docker!", (done) => {
-    chai
-      .request(app)
+describe("Express App", () => {
+  // Test the root route
+  it("should return Hello, Azure Pipelines with Docker! on / GET", (done) => {
+    chai.request(app)
       .get("/")
       .end((err, res) => {
-        expect(res).to.have.status(200);
-        expect(res.text).to.equal("Hello, Azure Pipelines with Docker!");
+        res.should.have.status(200);
+        res.text.should.be.eql("Hello, Azure Pipelines with Docker!");
         done();
       });
   });
