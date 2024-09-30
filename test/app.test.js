@@ -7,12 +7,12 @@ chai.use(chaiHttp);
 
 describe("Express App", () => {
   // Test the root route
-  it("should return Hello, Azure Pipelines with Docker! on / GET", (done) => {
+  it("should return Hello, Azure Pipelines / GET", (done) => {
     chai.request(app)
       .get("/")
       .end((err, res) => {
         res.should.have.status(200);
-        res.text.should.be.eql("Hello, Azure Pipelines with Docker!");
+        res.text.should.be.eql("Hello, Azure Pipelines!");
         done();
       });
   });
