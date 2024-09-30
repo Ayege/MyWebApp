@@ -5,63 +5,63 @@ variables:
   azureSubscription: '9a77c6b7-b89c-420d-9a92-2dc437472400'
   webAppName: 'MyWebApp'
   environmentName: 'Dev'
-  vmImageName: 'ubuntu-latest'  # Using 'ubuntu-latest' VM for Azure-hosted agent
+  vmImageName: 'ubuntu-latest'  
 
 stages:
 - stage: Build
-  displayName: 'Build Stage'
+  displayName: 'Build and Test Stage'
   jobs:
   - job: Build
     displayName: 'Build Job'
     pool:
-      vmImage: $(vmImageName)  
+      vmImage: $(vmImageName)
 
     steps:
+    # Step 1: Install Node.js
     - task: NodeTool@0
       inputs:
-        versionSpec: '20.x'
+        versionSpec: '20.x' 
       displayName: 'Install Node.js 20.x'
 
+    # Step 2: Install dependencies using npm
     - script: |
         npm install  # Install dependencies
-        npm test     # Run tests (Make sure tests are configured in package.json)
-      displayName: 'Install Dependencies and Run Tests'
+      displayName: 'Install Dependencies'
 
-    - task: ArchiveFiles@2
-      displayName: 'Archive Build Artifacts'
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'  # Archive all working directory files
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        replaceExistingArchive: true
+    # Step 3: Run tests using npm test
+    - script: |
+        npm test  # Execute Mocha tests
+      displayName: 'Run Tests'
 
+    # Step 4: Publish the build artifact for use in the deployment stage
     - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-      artifact: 'drop'  # Publish artifact to be available for the Deploy stage
+      artifact: 'drop'
+      displayName: 'Publish Artifact'
 
 - stage: Deploy
   displayName: 'Deploy Stage'
   dependsOn: Build
-  condition: succeeded()  # Ensure deployment runs only if the build succeeded
+  condition: succeeded()  # Ensure deployment runs only if the build succeeds
   jobs:
   - deployment: Deploy
     displayName: 'Deploy to Azure Web App'
     environment: $(environmentName)
     pool:
-      vmImage: $(vmImageName)  # Use hosted Ubuntu agent for the deployment job
+      vmImage: $(vmImageName)  # Use Ubuntu agent for deployment
     strategy:
       runOnce:
         deploy:
           steps:
           - download: current  # Download the artifact from the build stage
             artifact: drop
-            
+
+          # Step 6: Deploy to Azure Web App
           - task: AzureWebApp@1
-            displayName: 'Deploy to Azure Web App (Linux)'
             inputs:
-              azureSubscription: $(azureSubscription)
+              azureSubscription: $(azureSubscription)  # Your Azure subscription/service connection
               appType: webAppLinux
-              appName: $(webAppName)
-              runtimeStack: 'NODE|20LTS'  # Node.js 20 LTS runtime
+              appName: $(webAppName)  # Name of the Azure Web App
+              runtimeStack: 'NODE|20-lts'  # Node.js 20 LTS runtime for the Web App
               package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
               startUpCommand: 'npm start'  # Ensure app starts with npm start
+            displayName: 'Deploy to Azure Web App'
