@@ -2,66 +2,69 @@ trigger:
 - main
 
 variables:
-  azureSubscription: '9a77c6b7-b89c-420d-9a92-2dc437472400'
-  webAppName: 'MyWebApp'
-  environmentName: 'Dev'
-  vmImageName: 'ubuntu-latest'  
+  # Azure subscription and resource group details
+  azureSubscriptionId: 'a51d7e3f-6bc9-4345-8670-d24facccf3ca'
+  staticWebAppName: 'nice-beach-09658aa1e'  # Your Azure Static Web App name
+  resourceGroup: 'MyWebApp_group'  # Resource group name for the static web app
+  vmImageName: 'ubuntu-latest'  # Azure-hosted agent
 
 stages:
 - stage: Build
-  displayName: 'Build and Test Stage'
+  displayName: 'Build Stage'
   jobs:
   - job: Build
-    displayName: 'Build Job'
+    displayName: 'Build and Test'
     pool:
-      vmImage: $(vmImageName)
+      vmImage: $(vmImageName)  # Use Ubuntu hosted agent for the build
 
     steps:
-    # Step 1: Install Node.js
+    # Install Node.js
     - task: NodeTool@0
       inputs:
-        versionSpec: '20.x' 
-      displayName: 'Install Node.js 20.x'
+        versionSpec: '20.x'
+      displayName: 'Install Node.js'
 
-    # Step 2: Install dependencies using npm
+    # Install dependencies and run tests
     - script: |
-        npm install  # Install dependencies
-      displayName: 'Install Dependencies'
-
-    # Step 3: Run tests using npm test
-    - script: |
+        npm install
         npm test  # Execute Mocha tests
-      displayName: 'Run Tests'
+      displayName: 'Install Dependencies and Run Tests'
 
-    # Step 4: Publish the build artifact for use in the deployment stage
+    # Archive build files (optional)
+    - task: ArchiveFiles@2
+      displayName: 'Archive Build Files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        replaceExistingArchive: true
+
+    # Publish the build artifacts
     - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
       artifact: 'drop'
-      displayName: 'Publish Artifact'
+      displayName: 'Publish Build Artifacts'
 
 - stage: Deploy
-  displayName: 'Deploy Stage'
+  displayName: 'Deploy to Azure Static Web App'
   dependsOn: Build
-  condition: succeeded()  # Ensure deployment runs only if the build succeeds
+  condition: succeeded()
   jobs:
-  - deployment: Deploy
-    displayName: 'Deploy to Azure Web App'
-    environment: $(environmentName)
+  - job: Deploy
+    displayName: 'Deploy to Azure Static Web App'
     pool:
       vmImage: $(vmImageName)  # Use Ubuntu agent for deployment
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - download: current  # Download the artifact from the build stage
-            artifact: drop
 
-          # Step 6: Deploy to Azure Web App
-          - task: AzureWebApp@1
-            inputs:
-              azureSubscription: $(azureSubscription)  # Your Azure subscription/service connection
-              appType: webAppLinux
-              appName: $(webAppName)  # Name of the Azure Web App
-              runtimeStack: 'NODE|20-lts'  # Node.js 20 LTS runtime for the Web App
-              package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
-              startUpCommand: 'npm start'  # Ensure app starts with npm start
-            displayName: 'Deploy to Azure Web App'
+    steps:
+    # Download the build artifact
+    - download: current
+      artifact: drop
+
+    # Deploy to Azure Static Web App using AzureStaticWebApp@0 task
+    - task: AzureStaticWebApp@0
+      inputs:
+        app_location: "/"  # Location of your static app assets (adjust as necessary)
+        api_location: ""  # Leave empty if not deploying an API
+        output_location: "build"  # Adjust based on your build directory
+        azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)  # API token for authentication
+      displayName: 'Deploy to Azure Static Web App'
