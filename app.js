@@ -3,7 +3,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.send("Hello, Azure Pipelines with Docker!");
+  res.send("Hello, Azure Pipelines!");
 });
 
 if (process.env.NODE_ENV !== "test") {
@@ -12,4 +12,4 @@ if (process.env.NODE_ENV !== "test") {
   });
 }
 
-module.exports = app
+module.exports = app;

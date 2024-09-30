@@ -11,8 +11,8 @@
     "express": "^4.17.1"
   },
   "devDependencies": {
-    "chai": "^5.1.1",
-    "chai-http": "^4.3.0", 
+    "chai": "^4.3.6",
+    "chai-http": "^4.3.0",
     "mocha": "^10.7.3"
   }
 }
