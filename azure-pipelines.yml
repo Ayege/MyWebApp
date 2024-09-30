@@ -31,7 +31,7 @@ stages:
     # Install dependencies and run tests
     - script: |
         npm install
-        npm test  # Execute Mocha tests
+        npm test 
       displayName: 'Install Dependencies and Run Tests'
 
     # Archive build files (optional)
