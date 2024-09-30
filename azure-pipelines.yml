@@ -8,7 +8,7 @@ variables:
   resourceGroup: 'MyWebApp_group'  # Resource group name for the static web app
 
 pool:
-  name: 'AgentPool'  # Or the name of the pool where you registered your self-hosted agent
+  name: 'Default'  # Or the name of the pool where you registered your self-hosted agent
   demands:
     - agent.name -equals 'Ayeshas-MacBook-Pro'  # Use your self-hosted agent
 
@@ -19,7 +19,7 @@ stages:
   - job: Build
     displayName: 'Build and Test'
     pool:
-      name: 'AgentPool'  # Use the same pool as the self-hosted agent
+      name: 'Default'  # Use the same pool as the self-hosted agent
 
     steps:
     # Install Node.js
@@ -57,7 +57,7 @@ stages:
   - job: Deploy
     displayName: 'Deploy to Azure Static Web App'
     pool:
-      name: 'AgentPool'  # Use the same pool as the self-hosted agent
+      name: 'Default'  # Use the same pool as the self-hosted agent
 
     steps:
     # Download the build artifact
