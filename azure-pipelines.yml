@@ -63,8 +63,8 @@ stages:
     # Deploy to Azure Static Web App using AzureStaticWebApp@0 task
     - task: AzureStaticWebApp@0
       inputs:
-        app_location: "/"  # Location of your static app assets (adjust as necessary)
-        api_location: ""  # Leave empty if not deploying an API
+        app_location: "/"  
+        api_location: ""  
         output_location: "build"  # Adjust based on your build directory
         azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)  # API token for authentication
       displayName: 'Deploy to Azure Static Web App'
