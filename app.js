@@ -6,6 +6,10 @@ app.get("/", (req, res) => {
   res.send("Hello, Azure Pipelines with Docker!");
 });
 
-app.listen(port, () => {
-  console.log(`App running on port ${port}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(port, () => {
+    console.log(`App running on port ${port}`);
+  });
+}
+
+module.exports = app
